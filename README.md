@@ -42,19 +42,15 @@ kotlin
 var second = 1
 while (second <= simulationTiming) {
     println("${second}")
-
-    var i = 0
-    while (i < humans.size) {
-        humans[i].move()
-        i++
-    }
-    println()
     second++
 }
+
 
 Вывод финального состояния:
 
 kotlin
 println("\nКонечное состояние:")
-    for (human in humans) {
-        println("${human.surname} ${human.name} ${human.second_n}: ${human.getCoordinate()}")
+for (human in humans) {
+    println("${human.surname} ${human.name} ${human.second_n}: ${human.getCoordinate()}")
+}
+
