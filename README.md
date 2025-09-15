@@ -1,12 +1,12 @@
-# AndroidProject
-
+Android Project
 Фадеев Егор ИКС-432
 
 О проекте
 В проекте реализована модель случайного блуждания (Random Walk) в двумерном пространстве с координатами (x, y) для группы из 14 человек. Каждый участник за каждый шаг симуляции случайно меняет свои координаты, делая шаг назад, стоя на месте или шаг вперёд.
 
 Класс Human
-kotlin
+Kotlin
+
 class Human {
     var x = 0
     var y = 0
@@ -16,7 +16,7 @@ class Human {
         val dy = Random.nextInt(-1, 2)
 
         x += dx
-        y += dy 
+        y += dy
     }
 }
 Ход симуляции
@@ -29,28 +29,25 @@ class Human {
 В конце выводятся итоговые координаты каждого человека.
 
 Пример инициализации массива:
+Kotlin
 
-kotlin
 val humans = arrayOf(
     Human("Виктория", "Багазий", "Викторовна", 432, 20),
     Human("Игнат", "Бенескул", "Максимович", 432, 19),
     // остальные 12 человек
 )
 Цикл симуляции:
+Kotlin
 
-kotlin
 var second = 1
 while (second <= simulationTiming) {
     println("${second}")
     second++
 }
-
-
 Вывод финального состояния:
+Kotlin
 
-kotlin
 println("\nКонечное состояние:")
 for (human in humans) {
     println("${human.surname} ${human.name} ${human.second_n}: ${human.getCoordinate()}")
 }
-
