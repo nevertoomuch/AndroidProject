@@ -31,23 +31,45 @@ class Human {
 Пример инициализации массива:
 Kotlin
 
-val humans = arrayOf(
-    Human("Виктория", "Багазий", "Викторовна", 432, 20),
-    Human("Игнат", "Бенескул", "Максимович", 432, 19),
-    // остальные 12 человек
-)
+fun main() {
+    val humans = arrayOf(
+        Human("Виктория", "Багазий", "Викторовна", 432, 20),
+        Human("Игнат", "Бенескул", "Максимович", 432, 19),
+        Human("Иван", "Боровецкий", "Яковлевич", 432, 18),
+        Human("Таисия", "Воинова", "Александровна", 432, 19),
+        Human("Владимир", "Гомбоев", "Евгеньевич", 432, 19),
+        Human("Алёна", "Григорьева", "Алексеевна", 432, 18),
+        Human("Михаил", "Зинаков", "Романович", 432, 21),
+        Human("Роман", "Крикунов", "Сергеевич", 432, 19),
+        Human("Александр", "Пастухов", "Андреевич", 432, 20),
+        Human("Тимофей", "Петров", "Игоревич", 432, 18),
+        Human("Владислав", "Салий", "Павлович", 432, 19),
+        Human("Кирилл", "Симонов", "Дмитриевич", 432, 19),
+        Human("Александр", "Стаценко", "Олегович", 432, 20),
+        Human("Виктория", "Стебихова", "Владимировна", 432, 20)
+    )
 Цикл симуляции:
 Kotlin
 
-var second = 1
-while (second <= simulationTiming) {
-    println("${second}")
-    second++
-}
+println("Начало участников (0,0)")
+
+    var second = 1
+    while (second <= simulationTiming) {
+        println("${second}")
+
+        var i = 0
+        while (i < humans.size) {
+            humans[i].move()
+            i++
+        }
+        println()
+        second++
+    }
 Вывод финального состояния:
 Kotlin
 
 println("\nКонечное состояние:")
-for (human in humans) {
-    println("${human.surname} ${human.name} ${human.second_n}: ${human.getCoordinate()}")
+    for (human in humans) {
+        println("${human.surname} ${human.name} ${human.second_n}: ${human.getCoordinate()}")
+    }
 }
