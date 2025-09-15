@@ -7,6 +7,8 @@ Android Project
 Класс Human
 Kotlin
 
+Kotlin
+
 class Human {
     var x = 0
     var y = 0
@@ -18,16 +20,16 @@ class Human {
         x += dx
         y += dy
     }
+}
 Ход симуляции
 Создаётся 14 объектов класса Human с начальными координатами (0,0).
-
 Запрашивается время симуляции.
-
 В цикле от 1 до указанного времени каждый человек выполняет случайное перемещение.
-
 В конце выводятся итоговые координаты каждого человека.
 
 Пример инициализации массива:
+Kotlin
+
 Kotlin
 
 fun main() {
@@ -47,28 +49,32 @@ fun main() {
         Human("Александр", "Стаценко", "Олегович", 432, 20),
         Human("Виктория", "Стебихова", "Владимировна", 432, 20)
     )
+}
 Цикл симуляции:
 Kotlin
 
+Kotlin
+
 println("Начало участников (0,0)")
+var second = 1
+while (second <= simulationTiming) {
+    println("${second}")
 
-    var second = 1
-    while (second <= simulationTiming) {
-        println("${second}")
-
-        var i = 0
-        while (i < humans.size) {
-            humans[i].move()
-            i++
-        }
-        println()
-        second++
+    var i = 0
+    while (i < humans.size) {
+        humans[i].move()
+        i++
     }
+    println()
+    second++
+}
 Вывод финального состояния:
 Kotlin
 
+Kotlin
+
 println("\nКонечное состояние:")
-    for (human in humans) {
-        println("${human.surname} ${human.name} ${human.second_n}: ${human.getCoordinate()}")
-    }
+for (human in humans) {
+    println("${human.surname} ${human.name} ${human.second_n}: ${human.getCoordinate()}")
+}
 }
