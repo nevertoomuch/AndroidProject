@@ -68,5 +68,5 @@ fun main() {
 
     all.forEach { it.move() }
 
-    Thread.sleep(6000)
+    Thread.sleep(5000)
 }
