@@ -1,101 +1,71 @@
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.PI
 import kotlin.random.Random
 
-class Human {
-    var surname: String =""
-    var name: String =""
-    var second_n: String =""
-    var age: Int = 0
-    var speed: Double = 0.0
+open class Human(
+    var FIO: String,
+    var age: Int,
+    var speed: Int
+) {
+    protected var x: Double = 0.0
+    protected var y: Double = 0.0
+    protected val random = Random.Default
 
-    var groupN: Int = -1
-    var x = 0
-    var y = 0
+    open fun move() {
+        val thread = Thread {
+            repeat(5) { i ->
+                val alpha = 2 * PI * random.nextDouble()
+                x += speed * cos(alpha)
+                y += speed * sin(alpha)
 
-    constructor(surname_: String, name_: String, secondN: String, group_n: Int, age_: Int) {
-        name = name_
-        surname = surname_
-        second_n = secondN
-        groupN = group_n
-        age = age_
-        speed = 1.0
-        println("Создан Human: $name")
+                log("$FIO (Человек) перемещается в ($x, $y) [секунда ${i + 1}]")
+                Thread.sleep(1000)
+            }
+        }
+        thread.start()
     }
-    fun move() {
-        val dx = Random.nextInt(-1,2)
-        val dy = Random.nextInt(-1,2)
 
-        x += dx
-        y += dy
-
-        println("$surname $name перешел(а) на: ($x, $y)")
-
+    @Synchronized
+    protected fun log(msg: String) {
+        println(msg)
     }
-    fun getCoordinate(): String = "($x, $y)"
+}
 
+class Driver(
+    FIO: String,
+    age: Int,
+    speed: Int
+) : Human(FIO, age, speed) {
+
+    private var rout: Double = 2 * PI * random.nextDouble()
+
+    override fun move() {
+        val thread = Thread {
+            repeat(5) { i ->
+                x += speed * cos(rout)
+                y += speed * sin(rout)
+
+                log("$FIO (Водитель) двигается в ($x, $y) [секунда ${i + 1}]")
+                Thread.sleep(1000)
+            }
+        }
+        thread.start()
+    }
 }
 
 fun main() {
-    val humans = arrayOf(
-        Human("Виктория", "Багазий", "Викторовна", 432, 20),
-        Human("Игнат", "Бенескул", "Максимович", 432, 19),
-        Human("Иван", "Боровецкий", "Яковлевич", 432, 18),
-        Human("Таисия", "Воинова", "Александровна", 432, 19),
-        Human("Владимир", "Гомбоев", "Евгеньевич", 432, 19),
-        Human("Алёна", "Григорьева", "Алексеевна", 432, 18),
-        Human("Михаил", "Зинаков", "Романович", 432, 21),
-        Human("Роман", "Крикунов", "Сергеевич", 432, 19),
-        Human("Александр", "Пастухов", "Андреевич", 432, 20),
-        Human("Тимофей", "Петров", "Игоревич", 432, 18),
-        Human("Владислав", "Салий", "Павлович", 432, 19),
-        Human("Кирилл", "Симонов", "Дмитриевич", 432, 19),
-        Human("Александр", "Стаценко", "Олегович", 432, 20),
-        Human("Виктория", "Стебихова", "Владимировна", 432, 20)
+    val humans = listOf(
+        Human("Фадеев Е.А", 19, 9),
+        Human("Андропов Ф.С", 9, 3),
+        Human("Топский П.Е", 21, 11),
+        Human("Серегеев С.В", 54, 6)
     )
-    println("Длительность симуляции:")
-    val simulationTiming = try {
-        readln().toInt()
-    } catch (e: Exception) {
-        println("Ошибка ввода!")
-        return
-    }
+    val driver = Driver("Кириленко А.Г", 25, 30)
 
-    if (simulationTiming <= 0) {
-        println("Неправильная длительность симуляции!")
-        return
-    }
+    val all = humans + driver
 
-    println("Начало участников (0,0)")
+    all.forEach { it.move() }
 
-    var second = 1
-    while (second <= simulationTiming) {
-        println("${second}")
-
-        var i = 0
-        while (i < humans.size) {
-            humans[i].move()
-            i++
-        }
-        println()
-        second++
-    }
-
-    println("\nКонечное состояние:")
-    for (human in humans) {
-        println("${human.surname} ${human.name} ${human.second_n}: ${human.getCoordinate()}")
-    }
+    Thread.sleep(6000)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
