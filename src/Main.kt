@@ -1,3 +1,6 @@
+import classes.Driver
+import classes.Human
+
 fun main() {
     val humans = listOf(
         Human("Фадеев Е.А", 19, 9),
