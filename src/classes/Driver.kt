@@ -5,11 +5,12 @@ import kotlin.math.sin
 import kotlin.math.PI
 import kotlin.random.Random
 
+
 class Driver(
     FIO: String,
     age: Int,
     override val speed: Int
-) : Human(FIO, age, speed), Movable {
+) : Human(FIO, age, speed), interfaces.Movable {
 
     private var route: Double = 2 * PI * Random.nextDouble()
 
