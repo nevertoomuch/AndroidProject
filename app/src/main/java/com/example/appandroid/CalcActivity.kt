@@ -73,7 +73,7 @@ class CalcActivity : AppCompatActivity() {
                 val lastChar = currentInput.last()
                 if (lastChar.isDigit() || lastChar == '.') {
                     if (currentInput == "1337") {
-                        currentInput = "=) \n wikipedia.org/wiki/Leet"
+                        currentInput = "=) \n ru.wikipedia.org/wiki/Leet"
                         resultText.text = currentInput
                     } else {
                         val operators = listOf("+", "-", "*", "/")
