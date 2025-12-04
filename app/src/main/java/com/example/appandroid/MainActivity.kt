@@ -21,5 +21,14 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, MediaActivity::class.java)
             startActivity(intent)
         }
+        val locationButton = findViewById<Button>(R.id.locationButton)
+        locationButton.setOnClickListener {
+            val intent = Intent(this, LocationActivity::class.java)
+            startActivity(intent)
+
+
+
+
+        }
     }
 }

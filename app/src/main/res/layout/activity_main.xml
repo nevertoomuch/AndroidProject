@@ -22,10 +22,19 @@
         android:text="МедиаПлеер" />
 
     <Button
-        android:id="@+id/button"
+            android:id="@+id/locationButton"
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:layout_margin="8dp"
+            android:text="Локация Устройства" />
+
+    <Button
+        android:id="@+id/mСommButton"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:layout_margin="8dp"
-        android:text="Button" />
+        android:text="2G, 3G, 4G-LTE, 5G-NR" />
+
+
 
 </LinearLayout>
