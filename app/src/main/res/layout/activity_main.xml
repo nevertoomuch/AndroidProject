@@ -29,7 +29,14 @@
             android:text="Локация Устройства" />
 
     <Button
-        android:id="@+id/mСommButton"
+        android:id="@+id/androidToPcButton"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_margin="8dp"
+        android:text="Передача данных от Android к PC" />
+
+    <Button
+        android:id="@+id/telephoneDataButton"
         android:layout_width="match_parent"
         android:layout_height="70dp"
         android:layout_margin="8dp"

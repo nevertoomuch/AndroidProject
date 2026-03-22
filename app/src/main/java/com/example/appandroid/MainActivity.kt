@@ -25,10 +25,16 @@ class MainActivity : AppCompatActivity() {
         locationButton.setOnClickListener {
             val intent = Intent(this, LocationActivity::class.java)
             startActivity(intent)
-
-
-
-
+        }
+        val androidToPcButton = findViewById<Button>(R.id.androidToPcButton)
+        androidToPcButton.setOnClickListener {
+            val intent = Intent(this, AndroidToPcActivity::class.java)
+            startActivity(intent)
+        }
+        val telephoneDataButton = findViewById<Button>(R.id.telephoneDataButton)
+        telephoneDataButton.setOnClickListener {
+            val intent = Intent(this, TelephonyActivity::class.java)
+            startActivity(intent)
         }
     }
 }
