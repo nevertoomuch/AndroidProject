@@ -40,7 +40,7 @@ class AndroidToPcActivity : AppCompatActivity() {
     fun startClient() {
         val context = ZMQ.context(1)
         val socket = ZContext().createSocket(SocketType.REQ)
-        socket.connect("tcp://192.168.1.102:5556")
+        socket.connect("tcp://192.168.56.1:5556")
 
         val request = "Hello from Android!"
         socket.send(request.toByteArray(ZMQ.CHARSET), 0)

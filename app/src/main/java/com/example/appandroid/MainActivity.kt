@@ -31,5 +31,10 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, AndroidToPcActivity::class.java)
             startActivity(intent)
         }
+        val telephoneDataButton = findViewById<Button>(R.id.telephoneDataButton)
+        telephoneDataButton.setOnClickListener {
+            val intent = Intent(this, TelephonyActivity::class.java)
+            startActivity(intent)
+        }
     }
 }

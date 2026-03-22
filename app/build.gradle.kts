@@ -46,5 +46,6 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("org.zeromq:jeromq:0.5.3")
+    implementation("org.zeromq:jeromq:0.6.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
