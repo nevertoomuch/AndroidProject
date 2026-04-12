@@ -46,6 +46,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("org.zeromq:jeromq:0.6.0")
+    implementation("org.zeromq:jeromq:0.5.4")
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation("androidx.localbroadcastmanager:localbroadcastmanager:1.1.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    testImplementation("junit:junit:4.13.2")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

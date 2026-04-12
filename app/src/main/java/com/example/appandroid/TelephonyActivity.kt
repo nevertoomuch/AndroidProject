@@ -1,38 +1,42 @@
 package com.example.appandroid
 
+
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import android.Manifest
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationListener
-import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
-import android.telephony.*
+import android.os.Environment
+import android.widget.Button
 import android.widget.TextView
 import android.widget.ToggleButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import org.json.JSONObject
-import org.zeromq.SocketType
-import org.zeromq.ZContext
-import org.zeromq.ZMQ
-import android.os.Build
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.example.appandroid.services.TrackingService
 
-class TelephonyActivity : AppCompatActivity(), LocationListener {
+class TelephonyActivity : AppCompatActivity() {
 
-    private lateinit var locationManager: LocationManager
-    private lateinit var telephonyManager: TelephonyManager
     private lateinit var tvLog: TextView
     private lateinit var toggleStart: ToggleButton
 
-    private var zmqContext: ZContext? = null
-    private val serverAddress = "tcp://172.24.0.121:1337"
+    private val broadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            intent?.getStringExtra(TrackingService.EXTRA_MESSAGE)?.let { msg ->
+                tvLog.append("$msg\n")
+            }
+        }
+    }
 
     companion object {
         private const val REQ_CODE = 100
+
         private val PERMISSIONS = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -44,193 +48,111 @@ class TelephonyActivity : AppCompatActivity(), LocationListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_telephonedata)
 
-        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-        telephonyManager = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         tvLog = findViewById(R.id.tvStatusLoger)
         toggleStart = findViewById(R.id.toggleButton)
 
-        zmqContext = ZContext()
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            broadcastReceiver,
+            IntentFilter(TrackingService.ACTION_UPDATE)
+        )
 
         toggleStart.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 if (hasPermissions()) {
-                    startTracking()
+                    startService()
                 } else {
                     toggleStart.isChecked = false
                     ActivityCompat.requestPermissions(this, PERMISSIONS, REQ_CODE)
                 }
             } else {
-                stopTracking()
+                stopService()
+            }
+        }
+
+        findViewById<Button>(R.id.btnExport).setOnClickListener {
+            exportTelemetryFile()
+        }
+
+        findViewById<Button>(R.id.btnTestConnection).setOnClickListener {
+            tvLog.append("Тест соединения...\n")
+            Intent(this, TrackingService::class.java).apply {
+                action = TrackingService.ACTION_TEST_CONNECTION
+                startService(this)
             }
         }
     }
 
-    private fun startTracking() {
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-            toggleStart.isChecked = false
+    private fun exportTelemetryFile() {
+        if (!checkStoragePermission()) {
+            tvLog.append("Предоставьте доступ к файлам\n")
             return
         }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 1f, this)
-            log("Запуск...")
-        }
-    }
-
-    private fun stopTracking() {
-        locationManager.removeUpdates(this)
-        log("Остановлено")
-    }
-
-    override fun onLocationChanged(location: Location) {
-        val payload = JSONObject().apply {
-            put("lat", location.latitude)
-            put("lon", location.longitude)
-            put("alt", location.altitude)
-            put("accuracy", location.accuracy)
-            put("time", location.time)
-            put("cell_data", getCellularData())
-        }.toString()
-
-        Thread { sendZmq(payload) }.start()
-        log("${"%.6f".format(location.latitude)}, ${"%.6f".format(location.longitude)}")
-    }
-
-    private fun getCellularData(): JSONObject {
-        val result = JSONObject()
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
-            return result.put("error", "Permission Denied")
-        }
-
         try {
-            val cellInfoList = telephonyManager.allCellInfo
-            if (cellInfoList.isNullOrEmpty()) return result.put("error", "Данные не найдены!")
-
-            val cellInfo = cellInfoList.firstOrNull { it.isRegistered }
-            if (cellInfo == null) return result.put("error", "Вышек Связи не найдено!")
-
-            when (cellInfo) {
-                is CellInfoLte -> {
-                    val id = cellInfo.cellIdentity
-                    val sig = cellInfo.cellSignalStrength
-                    result.put("type", "LTE")
-
-                    result.put("identity", JSONObject().apply {
-                        put("band", if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-                            id.bands?.joinToString() else "N/A")
-
-                        put("earfcn", id.earfcn)
-                        put("mcc", id.mccString ?: "N/A")
-                        put("mnc", id.mncString ?: "N/A")
-                        put("pci", id.pci)
-                        put("tac", id.tac)
-                    })
-
-                    result.put("signal", JSONObject().apply {
-                        put("asuLevel", sig.asuLevel)
-                        put("cqi", sig.cqi)
-                        put("rsrp", sig.rsrp)
-                        put("rsrq", sig.rsrq)
-                        put("rssi", sig.rssi)
-                        put("rssnr", sig.rssnr)
-                        try {
-                            val ta = sig.timingAdvance
-                            put("timingAdvance", if (ta != Int.MIN_VALUE) ta else -1)
-                        } catch (e: Exception) {
-                            put("timingAdvance", -1)
-                        }
-                    })
+            val src = java.io.File(filesDir, "telemetry.jsonl")
+            if (!src.exists()) {
+                tvLog.append("Файл не найден. Сначала запустите сбор данных.\n")
+                return
+            }
+            if (src.length() == 0L) {
+                tvLog.append("Файл пустой\n")
+                return
+            }
+            val recordCount = src.readLines().size
+            val exportFileName = "telemetry_${DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss").format(LocalDateTime.now())}.jsonl"
+            val contentValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, exportFileName)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/jsonl")
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH,
+                    android.os.Environment.DIRECTORY_DOWNLOADS)
+            }
+            val uri = contentResolver.insert(
+                android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                contentValues
+            )
+            uri?.let {
+                contentResolver.openOutputStream(it)?.use { outputStream ->
+                    src.inputStream().use { inputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
                 }
-
-                is CellInfoGsm -> {
-                    val id = cellInfo.cellIdentity
-                    val sig = cellInfo.cellSignalStrength
-                    result.put("type", "GSM")
-
-                    result.put("identity", JSONObject().apply {
-                        @Suppress("DEPRECATION")
-                        put("ci", id.cid.toLong())
-                        put("bsic", id.bsic)
-                        put("arfcn", id.arfcn)
-                        put("lac", id.lac)
-                        put("mcc", id.mccString ?: "N/A")
-                        put("mnc", id.mncString ?: "N/A")
-                        put("psc", id.psc)
-                    })
-
-                    result.put("signal", JSONObject().apply {
-                        put("dbm", sig.dbm)
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            put("rssi", sig.rssi)
-                        } else {
-                            put("rssi", sig.dbm)
-                        }
-                        try {
-                            val ta = sig.timingAdvance
-                            put("timingAdvance", if (ta != Int.MIN_VALUE) ta else -1)
-                        } catch (e: Exception) {
-                            put("timingAdvance", -1)
-                        }
-                    })
-                }
-
-                is CellInfoNr -> {
-                    val id = cellInfo.cellIdentity as CellIdentityNr
-                    val sig = cellInfo.cellSignalStrength as CellSignalStrengthNr
-                    result.put("type", "NR")
-
-                    result.put("identity", JSONObject().apply {
-                        put("band", if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-                            id.bands?.joinToString() else "N/A")
-                        put("nci", id.nci)
-                        put("pci", id.pci)
-                        put("nrarfcn", id.nrarfcn)
-                        put("tac", id.tac)
-                        put("mcc", id.mccString ?: "N/A")
-                        put("mnc", id.mncString ?: "N/A")
-                    })
-
-                    result.put("signal", JSONObject().apply {
-                        put("ssRsrp", sig.ssRsrp)
-                        put("ssRsrq", sig.ssRsrq)
-                        put("ssSinr", sig.ssSinr)
-                        put("asuLevel", sig.asuLevel)
-
-                    })
-                }
+                tvLog.append("Экспортировано $recordCount записей\n")
+                tvLog.append("Файл: $exportFileName\n")
+                tvLog.append("Папка: Downloads\n")
+            } ?: run {
+                tvLog.append("Ошибка: не удалось создать файл\n")
             }
         } catch (e: Exception) {
-            result.put("error", e.message)
+            tvLog.append("Ошибка экспорта: ${e.message}\n")
+            e.printStackTrace()
         }
-
-        return result
     }
 
-    private fun sendZmq(data: String) {
-        try {
-            zmqContext?.let { ctx ->
-                val socket = ctx.createSocket(SocketType.REQ).apply {
-                    connect(serverAddress)
-                    sendTimeOut = 2000
-                    receiveTimeOut = 2000
-                    linger = 0
-                }
-                socket.send(data.toByteArray(ZMQ.CHARSET), 0)
-                val reply = socket.recv(0)
-                if (reply != null) {
-                    val msg = String(reply, ZMQ.CHARSET)
-                    runOnUiThread { log("Сервер: $msg") }
-                }
-                socket.close()
+    private fun startService() {
+        Intent(this, TrackingService::class.java).apply {
+            action = TrackingService.ACTION_START
+            startService(this)
+        }
+        tvLog.append("Запуск сервиса...\n")
+    }
+
+    private fun stopService() {
+        Intent(this, TrackingService::class.java).apply {
+            action = TrackingService.ACTION_STOP
+            startService(this)
+        }
+        tvLog.append("Остановка сервиса...\n")
+    }
+
+    private fun checkStoragePermission(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                val intent = Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = android.net.Uri.parse("package:$packageName")
+                startActivity(intent)
+                return false
             }
-        } catch (e: Exception) {
-            runOnUiThread { log("ZMQ: ${e.message}") }
         }
-    }
-
-    private fun log(msg: String) {
-        runOnUiThread { tvLog.append("$msg\n") }
+        return true
     }
 
     private fun hasPermissions() = PERMISSIONS.all {
@@ -241,23 +163,14 @@ class TelephonyActivity : AppCompatActivity(), LocationListener {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQ_CODE && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
             toggleStart.isChecked = true
-            startTracking()
+            startService()
         } else {
-            log("Нет прав")
+            tvLog.append("Нет прав\n")
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        stopTracking()
-        zmqContext?.close()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
     }
-
-    override fun onStatusChanged(p: String?, s: Int, b: Bundle?) {}
-    override fun onProviderEnabled(p: String) {}
-    override fun onProviderDisabled(p: String) {}
 }
-
-
-
-
